@@ -1,7 +1,7 @@
-package your.mod.example.core.server;
+package dev.ninix.visor.puppetshow.core.server;
 
 import org.vmstudio.visor.api.common.addon.VisorAddon;
-import your.mod.example.core.common.VisorExample;
+import dev.ninix.visor.puppetshow.core.common.VisorExample;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,4 +1,4 @@
-package your.mod.example.core.client.overlays;
+package dev.ninix.visor.puppetshow.core.client.overlays;
 
 
 import org.vmstudio.visor.api.client.gui.overlays.framework.VROverlayScreen;

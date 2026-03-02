@@ -1,9 +1,9 @@
-package your.mod.example.fabric;
+package dev.ninix.visor.puppetshow.fabric;
 
 import org.vmstudio.visor.api.ModLoader;
 import org.vmstudio.visor.api.VisorAPI;
-import your.mod.example.core.client.ExampleAddonClient;
-import your.mod.example.core.server.ExampleAddonServer;
+import dev.ninix.visor.puppetshow.core.client.ExampleAddonClient;
+import dev.ninix.visor.puppetshow.core.server.ExampleAddonServer;
 import net.fabricmc.api.ModInitializer;
 
 public class ExampleMod implements ModInitializer {

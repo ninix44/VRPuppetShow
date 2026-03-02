@@ -1,10 +1,10 @@
-package your.mod.example.forge;
+package dev.ninix.visor.forge;
 
 import org.vmstudio.visor.api.ModLoader;
 import org.vmstudio.visor.api.VisorAPI;
-import your.mod.example.core.client.ExampleAddonClient;
-import your.mod.example.core.common.VisorExample;
-import your.mod.example.core.server.ExampleAddonServer;
+import dev.ninix.visor.puppetshow.core.client.ExampleAddonClient;
+import dev.ninix.visor.puppetshow.core.common.VisorExample;
+import dev.ninix.visor.puppetshow.core.server.ExampleAddonServer;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod(VisorExample.MOD_ID)

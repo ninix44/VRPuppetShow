@@ -1,15 +1,11 @@
-package your.mod.example.core.mixin;
+package dev.ninix.visor.puppetshow.core.mixin;
 
-import org.vmstudio.visor.api.ModLoader;
-import your.mod.example.core.common.VisorExample;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import java.util.List;
 import java.util.Set;
-
-import static com.mojang.text2speech.Narrator.LOGGER;
 
 public class MixinConfig implements IMixinConfigPlugin {
 
@@ -45,14 +41,19 @@ public class MixinConfig implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (!ModLoader.get().isModLoaded(VisorExample.MOD_ID)) {
-            LOGGER.info("{} failed to load, canceled applying mixin '{}'",
-                    VisorExample.MOD_NAME, mixinClassName
-            );
-            return false;
-        }
-
-
         return true;
     }
+
+//    @Override
+//    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+//        if (!ModLoader.get().isModLoaded(VisorExample.MOD_ID)) {
+//            LOGGER.info("{} failed to load, canceled applying mixin '{}'",
+//                    VisorExample.MOD_NAME, mixinClassName
+//            );
+//            return false;
+//        }
+//
+//
+//        return true;
+//    }
 }
