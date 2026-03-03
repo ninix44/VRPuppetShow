@@ -3,31 +3,31 @@ loaderVersion = "[46,)"
 license = "MIT"
 
 [[mods]]
-modId = "visor_example"
+modId = "puppetshow"
 version = "${version}"
-displayName = "VisorExample"
-authors = "PhoenixRa"
+displayName = "VisorPuppetShow"
+authors = "Ninix"
 displayTest = "NONE"
 description = '''
-The Example Addon for Visor
+Puppet Show for Visor
 
 '''
 
-[[dependencies.visor_example]]
+[[dependencies.puppetshow]]
 modId = "visor"
 mandatory = true
 versionRange = "[0.2.0-alpha,)"
 ordering = "AFTER"
 side = "BOTH"
 
-[[dependencies.visor_example]]
+[[dependencies.puppetshow]]
 modId = "forge"
 mandatory = true
 versionRange = "[46,)"
 ordering = "AFTER"
 side = "BOTH"
 
-[[dependencies.visor_example]]
+[[dependencies.puppetshow]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[1.20,1.20.1]"
