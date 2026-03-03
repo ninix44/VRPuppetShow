@@ -1,5 +1,6 @@
 package dev.ninix.visor.puppetshow.core.client;
 
+import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import org.vmstudio.visor.api.VisorAPI;
 import org.vmstudio.visor.api.client.player.VRLocalPlayer;
 import org.vmstudio.visor.api.client.player.pose.PlayerPoseClient;
@@ -8,7 +9,14 @@ import org.vmstudio.visor.api.common.HandType;
 import org.joml.Vector3fc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Cat;
+import net.minecraft.world.entity.animal.Rabbit;
+import net.minecraft.world.entity.animal.Parrot;
+import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -51,16 +59,21 @@ public class PuppetLogic {
         if (releaseCooldownTicks > 0) releaseCooldownTicks--;
     }
 
-    //todo add other mobs later & rotate mobs around the axis (360 degrees)
+    //todo rotate mobs around the axis (360 degrees)
     private static void handleDetection(Minecraft mc, Vec3 lp, Vec3 rp) {
         AABB searchBox = mc.player.getBoundingBox().inflate(3.0);
-        List<Chicken> chickens = mc.level.getEntitiesOfClass(Chicken.class, searchBox);
+        List<LivingEntity> entities = mc.level.getEntitiesOfClass(LivingEntity.class, searchBox);
 
-        Chicken target = null;
-        for (Chicken chicken : chickens) {
-            if (chicken.getBoundingBox().inflate(0.15).contains(lp) && chicken.getBoundingBox().inflate(0.15).contains(rp)) {
-                target = chicken;
-                break;
+        LivingEntity target = null;
+        for (LivingEntity entity : entities) {
+            if (entity instanceof Enemy) continue;
+
+            if (isValidPuppet(entity)) {
+                AABB hb = entity.getBoundingBox().inflate(0.15);
+                if (hb.contains(lp) && hb.contains(rp)) {
+                    target = entity;
+                    break;
+                }
             }
         }
 
@@ -71,7 +84,7 @@ public class PuppetLogic {
                 hapticTriggered = true;
             }
             captureTicks++;
-            if (captureTicks >= 40) {
+            if (captureTicks >= 20) {
                 pickedEntity = target;
                 pickedEntity.noPhysics = true;
 
@@ -83,6 +96,19 @@ public class PuppetLogic {
             captureTicks = 0;
             hapticTriggered = false;
         }
+    }
+
+    private static boolean isValidPuppet(LivingEntity entity) {
+        if (entity instanceof AgeableMob ageable && ageable.isBaby()) {
+            return true;
+        }
+
+        return entity instanceof Chicken ||
+            entity instanceof Cat ||
+            entity instanceof Axolotl ||
+            entity instanceof Rabbit ||
+            entity instanceof Parrot ||
+            entity instanceof Bat;
     }
 
     private static void handleCarrying(Vec3 lp, Vec3 rp) {
