@@ -1,6 +1,5 @@
 package dev.ninix.visor.puppetshow.core.client;
 
-import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import org.vmstudio.visor.api.VisorAPI;
 import org.vmstudio.visor.api.client.player.VRLocalPlayer;
 import org.vmstudio.visor.api.client.player.pose.PlayerPoseClient;
@@ -11,10 +10,7 @@ import org.joml.Vector3fc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.animal.*;
-import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -66,7 +62,7 @@ public class PuppetLogic {
         return new Vec3(vec.x(), vec.y(), vec.z());
     }
 
-    //todo rotate mobs around the axis (360 degrees)
+    //todo (later, i'm waiting updated VisorAPI) rotate mobs around the axis (360 degrees)
     private static void handleDetection(Minecraft mc, Vec3 lpW, Vec3 rpW, Vec3 lpR, Vec3 rpR) {
         AABB searchBox = mc.player.getBoundingBox().inflate(3.0);
         List<LivingEntity> entities = mc.level.getEntitiesOfClass(LivingEntity.class, searchBox);
@@ -76,8 +72,13 @@ public class PuppetLogic {
             if (entity instanceof Enemy) continue;
 
             if (isValidPuppet(entity)) {
-                AABB hb = entity.getBoundingBox().inflate(0.15);
-                if (hb.contains(lpW) && hb.contains(rpW)) {
+                double boxSize = 1.0;
+                double half = boxSize / 2.0;
+                AABB blockHitbox = new AABB(
+                    entity.getX() - half, entity.getY(), entity.getZ() - half,
+                    entity.getX() + half, entity.getY() + boxSize, entity.getZ() + half
+                );
+                if (blockHitbox.contains(lpW) && blockHitbox.contains(rpW)) {
                     target = entity;
                     break;
                 }
@@ -165,13 +166,10 @@ public class PuppetLogic {
     }
 
     private static boolean isValidPuppet(LivingEntity entity) {
-        if (entity instanceof AgeableMob ageable && ageable.isBaby()) return true;
+        if (entity instanceof Enemy) return false;
 
-        return entity instanceof Chicken ||
-            entity instanceof Cat ||
-            entity instanceof Axolotl ||
-            entity instanceof Rabbit ||
-            entity instanceof Parrot ||
-            entity instanceof Bat;
+        double w = entity.getBbWidth();
+        double h = entity.getBbHeight();
+        return w <= 1.0 && h <= 1.0;
     }
 }
