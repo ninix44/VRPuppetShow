@@ -1,4 +1,4 @@
-package dev.ninix.visor.puppetshow.core.client.overlays;
+package org.vmstudio.puppetshow.core.client.overlays;
 
 import me.phoenixra.atumvr.api.misc.color.AtumColor;
 import org.vmstudio.visor.api.client.gui.overlays.RegisterVROverlayTemplate;

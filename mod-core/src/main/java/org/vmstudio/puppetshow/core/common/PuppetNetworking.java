@@ -1,4 +1,4 @@
-package dev.ninix.visor.puppetshow.core.common;
+package org.vmstudio.puppetshow.core.common;
 
 import net.minecraft.resources.ResourceLocation;
 

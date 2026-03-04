@@ -1,4 +1,4 @@
-package dev.ninix.visor.puppetshow.core.client;
+package org.vmstudio.puppetshow.core.client;
 
 import org.vmstudio.visor.api.VisorAPI;
 import org.vmstudio.visor.api.client.player.VRLocalPlayer;

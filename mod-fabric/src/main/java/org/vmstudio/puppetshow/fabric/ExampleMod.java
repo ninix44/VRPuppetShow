@@ -1,7 +1,7 @@
-package dev.ninix.visor.puppetshow.fabric;
+package org.vmstudio.puppetshow.fabric;
 
-import dev.ninix.visor.puppetshow.core.client.PuppetLogic;
-import dev.ninix.visor.puppetshow.core.common.PuppetNetworking;
+import org.vmstudio.puppetshow.core.client.PuppetLogic;
+import org.vmstudio.puppetshow.core.common.PuppetNetworking;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -10,8 +10,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import org.vmstudio.visor.api.ModLoader;
 import org.vmstudio.visor.api.VisorAPI;
-import dev.ninix.visor.puppetshow.core.client.ExampleAddonClient;
-import dev.ninix.visor.puppetshow.core.server.ExampleAddonServer;
+import org.vmstudio.puppetshow.core.client.ExampleAddonClient;
+import org.vmstudio.puppetshow.core.server.ExampleAddonServer;
 import net.fabricmc.api.ModInitializer;
 
 public class ExampleMod implements ModInitializer {

@@ -1,9 +1,9 @@
-package dev.ninix.visor.puppetshow.core.client;
+package org.vmstudio.puppetshow.core.client;
 
 import org.vmstudio.visor.api.VisorAPI;
 import org.vmstudio.visor.api.common.addon.VisorAddon;
-import dev.ninix.visor.puppetshow.core.client.overlays.VROverlayExample;
-import dev.ninix.visor.puppetshow.core.common.VisorExample;
+import org.vmstudio.puppetshow.core.client.overlays.VROverlayExample;
+import org.vmstudio.puppetshow.core.common.VisorExample;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ public class ExampleAddonClient implements VisorAddon {
 
     @Override
     public @Nullable String getAddonPackagePath() {
-        return "dev.ninix.visor.puppetshow.core.client";
+        return "org.vmstudio.puppetshow.core.client";
     }
 
     @Override

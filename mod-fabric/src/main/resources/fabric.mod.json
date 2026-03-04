@@ -12,7 +12,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "dev.ninix.visor.puppetshow.fabric.ExampleMod"
+      "org.vmstudio.puppetshow.fabric.ExampleMod"
     ]
   },
   "mixins": [

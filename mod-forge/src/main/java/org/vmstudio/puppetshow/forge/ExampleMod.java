@@ -1,10 +1,10 @@
-package dev.ninix.visor.forge;
+package org.vmstudio.puppetshow.forge;
 
-import dev.ninix.visor.puppetshow.core.client.ExampleAddonClient;
-import dev.ninix.visor.puppetshow.core.client.PuppetLogic;
-import dev.ninix.visor.puppetshow.core.common.PuppetNetworking;
-import dev.ninix.visor.puppetshow.core.common.VisorExample;
-import dev.ninix.visor.puppetshow.core.server.ExampleAddonServer;
+import org.vmstudio.puppetshow.core.client.ExampleAddonClient;
+import org.vmstudio.puppetshow.core.client.PuppetLogic;
+import org.vmstudio.puppetshow.core.common.PuppetNetworking;
+import org.vmstudio.puppetshow.core.common.VisorExample;
+import org.vmstudio.puppetshow.core.server.ExampleAddonServer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
