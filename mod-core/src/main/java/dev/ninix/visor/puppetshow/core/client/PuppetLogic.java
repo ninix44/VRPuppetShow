@@ -6,6 +6,7 @@ import org.vmstudio.visor.api.client.player.VRLocalPlayer;
 import org.vmstudio.visor.api.client.player.pose.PlayerPoseClient;
 import org.vmstudio.visor.api.client.player.pose.PlayerPoseType;
 import org.vmstudio.visor.api.common.HandType;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -55,7 +56,7 @@ public class PuppetLogic {
         if (pickedEntity == null) {
             if (releaseCooldownTicks <= 0) handleDetection(mc, lpWorld, rpWorld, lpRel, rpRel);
         } else {
-            handleCarrying(mc, lpWorld, rpWorld, lpRel, rpRel);
+            handleCarrying(mc, lpWorld, rpWorld, lpRel, rpRel, poseTick);
         }
 
         if (releaseCooldownTicks > 0) releaseCooldownTicks--;
@@ -90,7 +91,7 @@ public class PuppetLogic {
                 hapticTriggered = true;
             }
             captureTicks++;
-            if (captureTicks >= 20) {
+            if (captureTicks >= 15) {
                 pickedEntity = target;
                 pickedEntity.noPhysics = true;
 
@@ -106,7 +107,7 @@ public class PuppetLogic {
         }
     }
 
-    private static void handleCarrying(Minecraft mc, Vec3 lpW, Vec3 rpW, Vec3 lpR, Vec3 rpR) {
+    private static void handleCarrying(Minecraft mc, Vec3 lpW, Vec3 rpW, Vec3 lpR, Vec3 rpR, PlayerPoseClient poseTick) {
         if (pickedEntity == null || !pickedEntity.isAlive()) {
             releaseEntity(Vec3.ZERO);
             return;
@@ -115,11 +116,18 @@ public class PuppetLogic {
         Vec3 centerWorld = lpW.add(rpW).scale(0.5);
         Vec3 centerRel = lpR.add(rpR).scale(0.5);
 
-        Vec3 relativeVelocity = centerRel.subtract(lastRelativeCenterPos);
+        Vec3 deltaRel = centerRel.subtract(lastRelativeCenterPos);
         lastRelativeCenterPos = centerRel;
 
-        if (relativeVelocity.length() > THROW_THRESHOLD) {
-            Vec3 throwVec = relativeVelocity.scale(STRENGTH_MODIFIER).add(0, 0.2, 0);
+        Vector3f jomlDelta = new Vector3f((float)deltaRel.x, (float)deltaRel.y, (float)deltaRel.z);
+        Vector3f worldOrientedDelta = poseTick
+            .convertPositionFrom(PlayerPoseType.RELATIVE, jomlDelta)
+            .add(poseTick.getOrigin().mul(-1, new Vector3f()));
+
+        Vec3 finalVelocity = new Vec3(worldOrientedDelta.x(), worldOrientedDelta.y(), worldOrientedDelta.z());
+
+        if (finalVelocity.length() > THROW_THRESHOLD) {
+            Vec3 throwVec = finalVelocity.scale(STRENGTH_MODIFIER).add(0, 0.2, 0);
             releaseEntity(throwVec);
             return;
         }
