@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 @Mod(VisorExample.MOD_ID)
 public class ExampleMod {
 
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "3";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         PuppetNetworking.SYNC_ENTITY_POS,
         () -> PROTOCOL_VERSION,
@@ -30,17 +30,13 @@ public class ExampleMod {
     );
 
     public ExampleMod() {
-        int id = 0;
-        CHANNEL.registerMessage(id++, PuppetSyncPacket.class,
+        CHANNEL.registerMessage(0, PuppetSyncPacket.class,
             PuppetSyncPacket::encode,
             PuppetSyncPacket::decode,
             PuppetSyncPacket::handle);
 
         if (!ModLoader.get().isDedicatedServer()) {
-            PuppetLogic.bridge = (entity, x, y, z, isHeld) -> {
-                CHANNEL.sendToServer(new PuppetSyncPacket(entity.getId(), x, y, z, isHeld));
-            };
-
+            PuppetLogic.bridge = (entity, x, y, z, vx, vy, vz, held) -> CHANNEL.sendToServer(new PuppetSyncPacket(entity.getId(), x, y, z, vx, vy, vz, held));
             MinecraftForge.EVENT_BUS.addListener(this::onClientTick);
         }
 
@@ -62,36 +58,49 @@ public class ExampleMod {
     }
 
     public static class PuppetSyncPacket {
-        private final int entityId;
-        private final double x, y, z;
-        private final boolean isHeld;
+        private final int id;
+        private final double x, y, z, vx, vy, vz;
+        private final boolean held;
 
-        public PuppetSyncPacket(int entityId, double x, double y, double z, boolean isHeld) {
-            this.entityId = entityId;
-            this.x = x; this.y = y; this.z = z;
-            this.isHeld = isHeld;
+        public PuppetSyncPacket(int id, double x, double y, double z, double vx, double vy, double vz, boolean held) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.vx = vx;
+            this.vy = vy;
+            this.vz = vz;
+            this.held = held;
         }
 
         public static void encode(PuppetSyncPacket msg, FriendlyByteBuf buf) {
-            buf.writeInt(msg.entityId);
+            buf.writeInt(msg.id);
             buf.writeDouble(msg.x);
             buf.writeDouble(msg.y);
             buf.writeDouble(msg.z);
-            buf.writeBoolean(msg.isHeld);
+            buf.writeDouble(msg.vx);
+            buf.writeDouble(msg.vy);
+            buf.writeDouble(msg.vz);
+            buf.writeBoolean(msg.held);
         }
 
         public static PuppetSyncPacket decode(FriendlyByteBuf buf) {
-            return new PuppetSyncPacket(buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readBoolean());
+            return new PuppetSyncPacket(buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(),
+                buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readBoolean());
         }
 
         public static void handle(PuppetSyncPacket msg, Supplier<NetworkEvent.Context> ctx) {
             ctx.get().enqueueWork(() -> {
-                Entity entity = ctx.get().getSender().level().getEntity(msg.entityId);
-                if (entity != null && entity.distanceToSqr(ctx.get().getSender()) < 256) {
-                    entity.noPhysics = msg.isHeld;
+                Entity entity = ctx.get().getSender().level().getEntity(msg.id);
+                if (entity != null) {
+                    // if (entity != null && entity.distanceToSqr(ctx.get().getSender()) < 256( {
+                    entity.noPhysics = msg.held;
                     entity.teleportTo(msg.x, msg.y, msg.z);
-                    entity.setDeltaMovement(0, 0, 0);
-                    entity.fallDistance = 0;
+                    if (!msg.held) {
+                        entity.setDeltaMovement(msg.vx, msg.vy, msg.vz);
+                        entity.hasImpulse = true;
+                        entity.hurtMarked = true;
+                    }
                 }
             });
             ctx.get().setPacketHandled(true);

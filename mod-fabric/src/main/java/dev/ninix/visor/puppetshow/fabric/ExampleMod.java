@@ -17,34 +17,38 @@ import net.fabricmc.api.ModInitializer;
 public class ExampleMod implements ModInitializer {
     @Override
     public void onInitialize() {
-        PuppetLogic.bridge = (entity, x, y, z, isHeld) -> {
+        PuppetLogic.bridge = (entity, x, y, z, vx, vy, vz, isHeld) -> {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(entity.getId());
             buf.writeDouble(x);
             buf.writeDouble(y);
             buf.writeDouble(z);
+            buf.writeDouble(vx);
+            buf.writeDouble(vy);
+            buf.writeDouble(vz);
             buf.writeBoolean(isHeld);
             ClientPlayNetworking.send(PuppetNetworking.SYNC_ENTITY_POS, buf);
         };
 
         ServerPlayNetworking.registerGlobalReceiver(PuppetNetworking.SYNC_ENTITY_POS, (server, player, handler, buf, responseSender) -> {
-            int entityId = buf.readInt();
-            double x = buf.readDouble();
-            double y = buf.readDouble();
-            double z = buf.readDouble();
+            int id = buf.readInt();
+            double x = buf.readDouble(), y = buf.readDouble(), z = buf.readDouble();
+            double vx = buf.readDouble(), vy = buf.readDouble(), vz = buf.readDouble();
             boolean isHeld = buf.readBoolean();
 
             server.execute(() -> {
-                Entity entity = player.level().getEntity(entityId);
-                if (entity != null && entity.distanceToSqr(player) < 256) {
+                Entity entity = player.level().getEntity(id);
+                if (entity != null && entity.distanceToSqr(player) < 512) {
                     entity.noPhysics = isHeld;
                     entity.teleportTo(x, y, z);
-                    entity.setDeltaMovement(0, 0, 0);
-                    entity.fallDistance = 0;
-
                     if (!isHeld) {
-                        entity.setPos(x, y, z);
+                        entity.setDeltaMovement(vx, vy, vz);
+                        entity.hasImpulse = true;
+                        entity.hurtMarked = true;
+                    } else {
+                        entity.setDeltaMovement(0, 0, 0);
                     }
+                    entity.fallDistance = 0;
                 }
             });
         });

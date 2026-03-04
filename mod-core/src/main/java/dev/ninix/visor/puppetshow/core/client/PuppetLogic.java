@@ -12,10 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.animal.Chicken;
-import net.minecraft.world.entity.animal.Cat;
-import net.minecraft.world.entity.animal.Rabbit;
-import net.minecraft.world.entity.animal.Parrot;
+import net.minecraft.world.entity.animal.*;
 import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -24,7 +21,7 @@ import java.util.List;
 
 public class PuppetLogic {
     public interface NetworkBridge {
-        void sendSync(Entity entity, double x, double y, double z, boolean isHeld);
+        void sendSync(Entity entity, double x, double y, double z, double vx, double vy, double vz, boolean isHeld);
     }
     public static NetworkBridge bridge;
 
@@ -34,7 +31,13 @@ public class PuppetLogic {
     private static boolean hapticTriggered = false;
     private static int syncTimer = 0;
 
-    private static final double RELEASE_DISTANCE = 0.8;
+    // if player rotate using controller joystick, the mob fall out of players hands (bcz TICK is used instead of RELATIVE)
+    private static Vec3 lastCenterPos = Vec3.ZERO;
+    private static Vec3 lastPlayerPos = Vec3.ZERO;
+
+    private static final double RELEASE_DISTANCE = 0.6;
+    private static final double THROW_THRESHOLD = 0.15;
+    private static final double STRENGTH_MODIFIER = 3.0;
 
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
@@ -52,8 +55,9 @@ public class PuppetLogic {
 
         if (pickedEntity == null) {
             if (releaseCooldownTicks <= 0) handleDetection(mc, lp, rp);
+            lastPlayerPos = mc.player.position();
         } else {
-            handleCarrying(lp, rp);
+            handleCarrying(mc, lp, rp);
         }
 
         if (releaseCooldownTicks > 0) releaseCooldownTicks--;
@@ -89,6 +93,8 @@ public class PuppetLogic {
                 pickedEntity.noPhysics = true;
 
                 captureTicks = 0;
+                lastCenterPos = lp.add(rp).scale(0.5);
+                lastPlayerPos = mc.player.position();
                 VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 200f, 1.0f, 0.2f);
                 VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 200f, 1.0f, 0.2f);
             }
@@ -98,26 +104,33 @@ public class PuppetLogic {
         }
     }
 
-    private static boolean isValidPuppet(LivingEntity entity) {
-        if (entity instanceof AgeableMob ageable && ageable.isBaby()) {
-            return true;
-        }
-
-        return entity instanceof Chicken ||
-            entity instanceof Cat ||
-            entity instanceof Axolotl ||
-            entity instanceof Rabbit ||
-            entity instanceof Parrot ||
-            entity instanceof Bat;
-    }
-
-    private static void handleCarrying(Vec3 lp, Vec3 rp) {
+    private static void handleCarrying(Minecraft mc, Vec3 lp, Vec3 rp) {
         if (pickedEntity == null || !pickedEntity.isAlive()) {
-            releaseEntity();
+            releaseEntity(Vec3.ZERO);
             return;
         }
 
+        Vec3 currentPlayerPos = mc.player.position();
+        Vec3 playerMovement = currentPlayerPos.subtract(lastPlayerPos);
+        lastPlayerPos = currentPlayerPos;
+
         Vec3 center = lp.add(rp).scale(0.5);
+
+        Vec3 rawVelocity = center.subtract(lastCenterPos);
+        Vec3 relativeVelocity = rawVelocity.subtract(playerMovement);
+        lastCenterPos = center;
+
+        if (relativeVelocity.length() > THROW_THRESHOLD) {
+            Vec3 throwVec = relativeVelocity.scale(STRENGTH_MODIFIER).add(0, 0.2, 0);
+            releaseEntity(throwVec);
+            return;
+        }
+
+        if (lp.distanceTo(rp) > RELEASE_DISTANCE) {
+            releaseEntity(Vec3.ZERO);
+            return;
+        }
+
         double yPos = center.y - (pickedEntity.getBbHeight() / 2.0);
 
         pickedEntity.setPos(center.x, yPos, center.z);
@@ -126,25 +139,33 @@ public class PuppetLogic {
 
         syncTimer++;
         if (syncTimer >= 2) {
-            if (bridge != null) bridge.sendSync(pickedEntity, center.x, yPos, center.z, true);
+            if (bridge != null) bridge.sendSync(pickedEntity, center.x, yPos, center.z, 0, 0, 0, true);
             syncTimer = 0;
-        }
-
-        if (lp.distanceTo(rp) > RELEASE_DISTANCE) {
-            releaseEntity();
         }
     }
 
-    private static void releaseEntity() {
+    private static void releaseEntity(Vec3 throwVector) {
         if (pickedEntity != null) {
             pickedEntity.noPhysics = false;
             if (bridge != null) {
-                bridge.sendSync(pickedEntity, pickedEntity.getX(), pickedEntity.getY(), pickedEntity.getZ(), false);
+                bridge.sendSync(pickedEntity, pickedEntity.getX(), pickedEntity.getY(), pickedEntity.getZ(),
+                    throwVector.x, throwVector.y, throwVector.z, false);
             }
         }
         pickedEntity = null;
         captureTicks = 0;
         releaseCooldownTicks = 30;
         hapticTriggered = false;
+    }
+
+    private static boolean isValidPuppet(LivingEntity entity) {
+        if (entity instanceof AgeableMob ageable && ageable.isBaby()) return true;
+
+        return entity instanceof Chicken ||
+            entity instanceof Cat ||
+            entity instanceof Axolotl ||
+            entity instanceof Rabbit ||
+            entity instanceof Parrot ||
+            entity instanceof Bat;
     }
 }
