@@ -48,7 +48,7 @@ public class PuppetLogic {
     private static final double RELEASE_DISTANCE = 0.6;
     private static final double THROW_THRESHOLD = 0.15;
     private static final double STRENGTH_MODIFIER = 3.0;
-    private static final double FACE_DISTANCE = 0.90; // TODO maybe change
+    private static final double FACE_DISTANCE = 0.35;
 
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
@@ -79,20 +79,22 @@ public class PuppetLogic {
     }
 
     private static void handleSpecialMechanics(Minecraft mc, PlayerPoseClient pose) {
-        if (pickedEntity == null || interactionCooldown > 0) return;
+        if (pickedEntity == null) return;
 
         Vec3 headPos = jomlToVec3(pose.getHmd().getPosition());
-        double distToHead = pickedEntity.position().distanceTo(headPos);
+        Vec3 mouthPos = headPos.subtract(0, 0.15, 0);
+        Vec3 entityCenter = pickedEntity.position().add(0, pickedEntity.getBbHeight() / 2.0, 0);
+        double distToMouth = entityCenter.distanceTo(mouthPos);
 
         boolean nearWater = mc.level.getFluidState(pickedEntity.blockPosition()).is(FluidTags.WATER) ||
             mc.level.getFluidState(pickedEntity.blockPosition().above()).is(FluidTags.WATER);
 
-        if (pickedEntity instanceof Frog && distToHead < FACE_DISTANCE) {
+        if (pickedEntity instanceof Frog && distToMouth < 0.25 && interactionCooldown <= 0) {
             spawnClientParticles(ParticleTypes.HEART, 5);
             interactionCooldown = 30;
         }
 
-        if (pickedEntity instanceof AbstractFish && distToHead < 0.80) { // TODO maybe change
+        if (pickedEntity instanceof AbstractFish && distToMouth < FACE_DISTANCE && interactionCooldown <= 0) {
             if (bridge != null) bridge.sendAction(pickedEntity, "EAT");
 
             mc.player.playSound(SoundEvents.GENERIC_EAT, 1.0f, 1.0f);
@@ -108,18 +110,27 @@ public class PuppetLogic {
         }
 
         if (pickedEntity instanceof Cat) {
-            if (distToHead < FACE_DISTANCE || nearWater) {
-                if (bridge != null) bridge.sendAction(pickedEntity, "SCRATCH");
+            if (distToMouth < FACE_DISTANCE || nearWater) {
+                mc.getSoundManager().stop(SoundEvents.CAT_PURR.getLocation(), null);
 
-                mc.player.playSound(SoundEvents.CAT_HISS, 1.0f, 1.0f);
-                spawnClientParticles(ParticleTypes.ANGRY_VILLAGER, 3);
+                if (mc.level.getGameTime() % 5 == 0) {
+                    spawnClientParticles(ParticleTypes.ANGRY_VILLAGER, 1);
+                }
 
-                interactionCooldown = 40;
+                if (interactionCooldown <= 0) {
+                    if (bridge != null) bridge.sendAction(pickedEntity, "SCRATCH");
 
-                VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 400f, 1.0f, 0.1f);
-                VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 400f, 1.0f, 0.1f);
+                    mc.player.playSound(SoundEvents.CAT_HISS, 1.0f, 1.0f);
+
+                    interactionCooldown = 40;
+
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 400f, 1.0f, 0.1f);
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 400f, 1.0f, 0.1f);
+                }
             } else {
                 if (mc.level.getGameTime() % 60 == 0) {
+                    mc.getSoundManager().stop(SoundEvents.CAT_HISS.getLocation(), null);
+
                     mc.player.playSound(SoundEvents.CAT_PURR, 0.8f, 1.0f);
 
                     if (mc.level.random.nextFloat() < 0.3f) {
@@ -172,7 +183,7 @@ public class PuppetLogic {
                     VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 100f, 0.5f, 0.1f);
                 }
 
-                if (chickenShakeTicks >= 100) {
+                if (chickenShakeTicks >= 100 && interactionCooldown <= 0) {
                     if (bridge != null) bridge.sendAction(pickedEntity, "EGG");
 
                     mc.player.playSound(SoundEvents.CHICKEN_EGG, 1.0f, 1.0f);
@@ -197,6 +208,8 @@ public class PuppetLogic {
         double yOffset = 0.2;
         if (pickedEntity instanceof Villager v && v.isBaby()) {
             yOffset = -0.2;
+        } else if (pickedEntity instanceof Cat) {
+            yOffset = -0.15;
         }
 
         for (int i = 0; i < count; i++) {
