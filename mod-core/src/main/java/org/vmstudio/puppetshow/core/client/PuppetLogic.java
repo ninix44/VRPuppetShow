@@ -138,18 +138,24 @@ public class PuppetLogic {
         //lastVelocity = currentVelocity;
 
         if (isShaking) {
-            shakeTicks++;
+            if (shakeTicks < 100) {
+                shakeTicks++;
+            }
         } else {
             if (shakeTicks > 0) shakeTicks--;
         }
 
         if (pickedEntity instanceof Villager v && v.isBaby()) {
             if (shakeTicks >= 40) {
-                spawnClientParticles(ParticleTypes.ANGRY_VILLAGER, 1);
-                if (shakeTicks % 10 == 0) {
+                long gameTime = mc.level.getGameTime();
+
+                if (gameTime % 5 == 0) {
+                    spawnClientParticles(ParticleTypes.ANGRY_VILLAGER, 1);
+                }
+                if (gameTime % 10 == 0) {
                     mc.player.playSound(SoundEvents.VILLAGER_NO, 1.0f, 1.5f);
-                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 150f, 0.5f, 0.05f); // TODO maybe change
-                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 150f, 0.5f, 0.05f); // TODO maybe change
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 150f, 0.5f, 0.05f);
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 150f, 0.5f, 0.05f);
                 }
             }
         }
@@ -187,10 +193,16 @@ public class PuppetLogic {
     private static void spawnClientParticles(ParticleOptions type, int count) {
         Minecraft mc = Minecraft.getInstance();
         if (pickedEntity == null) return;
+
+        double yOffset = 0.2;
+        if (pickedEntity instanceof Villager v && v.isBaby()) {
+            yOffset = -0.2;
+        }
+
         for (int i = 0; i < count; i++) {
             mc.level.addParticle(type,
                 pickedEntity.getX() + (mc.level.random.nextDouble() - 0.5) * 0.3,
-                pickedEntity.getY() + pickedEntity.getBbHeight() + 0.2,
+                pickedEntity.getY() + pickedEntity.getBbHeight() + yOffset,
                 pickedEntity.getZ() + (mc.level.random.nextDouble() - 0.5) * 0.3,
                 0, 0.05, 0);
         }
