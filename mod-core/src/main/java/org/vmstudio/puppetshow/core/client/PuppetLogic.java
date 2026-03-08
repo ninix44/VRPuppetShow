@@ -40,8 +40,8 @@ public class PuppetLogic {
 
     private static int shakeTicks = 0;
     private static int chickenShakeTicks = 0;
+    private static int eatTicks = 0;
     private static int interactionCooldown = 0;
-    //private static Vec3 lastVelocity = Vec3.ZERO;
 
     private static Vec3 lastRelativeCenterPos = Vec3.ZERO;
 
@@ -69,6 +69,7 @@ public class PuppetLogic {
             if (releaseCooldownTicks <= 0) handleDetection(mc, lpWorld, rpWorld, lpRel, rpRel);
             shakeTicks = 0;
             chickenShakeTicks = 0;
+            eatTicks = 0;
         } else {
             handleCarrying(mc, lpWorld, rpWorld, lpRel, rpRel, poseTick);
             handleSpecialMechanics(mc, poseTick);
@@ -94,19 +95,37 @@ public class PuppetLogic {
             interactionCooldown = 30;
         }
 
-        if (pickedEntity instanceof AbstractFish && distToMouth < FACE_DISTANCE && interactionCooldown <= 0) {
-            if (bridge != null) bridge.sendAction(pickedEntity, "EAT");
+        if (pickedEntity instanceof AbstractFish) {
+            if (distToMouth < FACE_DISTANCE) {
+                eatTicks++;
 
-            mc.player.playSound(SoundEvents.GENERIC_EAT, 1.0f, 1.0f);
-            mc.player.playSound(SoundEvents.PLAYER_BURP, 1.0f, 1.0f);
-            spawnClientParticles(ParticleTypes.CLOUD, 5);
-            VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 300f, 1.0f, 0.2f);
-            VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 300f, 1.0f, 0.2f);
+                if (eatTicks % 10 == 0) {
+                    mc.player.playSound(SoundEvents.GENERIC_EAT, 0.6f + (mc.level.random.nextFloat() * 0.4f), 1.0f + (mc.level.random.nextFloat() * 0.2f));
 
-            pickedEntity = null;
-            shakeTicks = 0;
-            chickenShakeTicks = 0;
-            return;
+                    spawnClientParticles(ParticleTypes.SPLASH, 4);
+                    spawnClientParticles(ParticleTypes.CLOUD, 1);
+
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 100f, 0.2f, 0.05f);
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 100f, 0.2f, 0.05f);
+                }
+
+                if (eatTicks >= 50 && interactionCooldown <= 0) {
+                    if (bridge != null) bridge.sendAction(pickedEntity, "EAT");
+
+                    mc.player.playSound(SoundEvents.PLAYER_BURP, 1.0f, 1.0f);
+                    spawnClientParticles(ParticleTypes.CLOUD, 10);
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 300f, 1.0f, 0.2f);
+                    VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 300f, 1.0f, 0.2f);
+
+                    pickedEntity = null;
+                    shakeTicks = 0;
+                    chickenShakeTicks = 0;
+                    eatTicks = 0;
+                    return;
+                }
+            } else {
+                eatTicks = 0;
+            }
         }
 
         if (pickedEntity instanceof Cat) {
@@ -146,7 +165,6 @@ public class PuppetLogic {
         Vec3 currentVelocity = pickedEntity.getDeltaMovement();
         double speed = currentVelocity.length();
         boolean isShaking = speed > 0.05;
-        //lastVelocity = currentVelocity;
 
         if (isShaking) {
             if (shakeTicks < 100) {
@@ -260,6 +278,7 @@ public class PuppetLogic {
                 captureTicks = 0;
                 shakeTicks = 0;
                 chickenShakeTicks = 0;
+                eatTicks = 0;
                 lastRelativeCenterPos = lpR.add(rpR).scale(0.5);
                 VisorAPI.client().getInputManager().triggerHapticPulse(HandType.MAIN, 200f, 1.0f, 0.2f);
                 VisorAPI.client().getInputManager().triggerHapticPulse(HandType.OFFHAND, 200f, 1.0f, 0.2f);
@@ -324,6 +343,7 @@ public class PuppetLogic {
         captureTicks = 0;
         shakeTicks = 0;
         chickenShakeTicks = 0;
+        eatTicks = 0;
         releaseCooldownTicks = 30;
         hapticTriggered = false;
     }
